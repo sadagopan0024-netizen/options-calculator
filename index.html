@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3-Tier Options Position Size Calculator</title>
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --primary: #2563eb;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --border: #e2e8f0;
+            --highlight: #fef08a; /* Bright yellow highlight */
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .calculator-container {
+            width: 100%;
+            max-width: 500px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            padding: 24px;
+            border: 1px solid var(--border);
+        }
+        h2 {
+            margin-top: 0;
+            text-align: center;
+            color: #1e293b;
+            font-size: 1.3rem;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 12px;
+        }
+        .tier-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        /* Tier 1 Layout */
+        .input-group {
+            margin-bottom: 14px;
+        }
+        label {
+            display: block;
+            font-size: 0.9rem;
+            color: #475569;
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+        .flex-label {
+            display: flex;
+            justify-content: space-between;
+        }
+        input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            background: #f1f5f9;
+        }
+        input[type="range"] {
+            width: 100%;
+            margin-top: 6px;
+        }
+        .btn-toggle-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .btn-toggle {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid var(--border);
+            background: #f1f5f9;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+        .btn-toggle.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        /* Tier 2 Layout */
+        .tier-highlight {
+            background-color: var(--highlight);
+            border: 2px solid #eab308;
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(234, 179, 8, 0.15);
+        }
+        .highlight-box span {
+            display: block;
+        }
+        .highlight-val {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #854d0e;
+        }
+        .highlight-lbl {
+            font-size: 0.8rem;
+            color: #713f12;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        /* Tier 3 Layout */
+        .output-card {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.95rem;
+        }
+        .val-bold {
+            font-weight: 700;
+        }
+        .text-danger { color: var(--danger); }
+        .text-success { color: var(--success); }
+        .info-sub {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: -10px;
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="calculator-container">
+    <h2>Options Quantities Calculator</h2>
+
+    <!-- TIER 1 -->
+    <div class="tier-title">Tier 1: Inputs & Parameters</div>
+    
+    <div class="input-group">
+        <label for="capital">Total Capital Pool (₹)</label>
+        <input type="number" id="capital" value="189627" oninput="calculatePosition()">
+        <div class="info-sub">Per Trade Max Limit (30%): ₹<span id="lbl-limit">0</span></div>
+    </div>
+
+    <label>Select Index Type</label>
+    <div class="btn-toggle-container">
+        <button id="btn-nifty" class="btn-toggle active" onclick="setIndex('NIFTY', 65)">Nifty (Lot 65)</button>
+        <button id="btn-sensex" class="btn-toggle" onclick="setIndex('SENSEX', 20)">Sensex (Lot 20)</button>
+    </div>
+
+    <div class="input-group">
+        <div class="label-wrapper flex-label">
+            <label for="premium">Premium Entry Price (₹)</label>
+            <span id="val-premium" class="val-bold">260</span>
+        </div>
+        <input type="range" id="premium" min="5" max="1000" value="260" step="5" oninput="updateSliderValues()">
+    </div>
+
+    <div class="input-group">
+        <div class="label-wrapper flex-label">
+            <label for="sl">Points Risk (Stop Loss)</label>
+            <span id="val-sl" class="val-bold">17 pts</span>
+        </div>
+        <input type="range" id="sl" min="1" max="200" value="17" step="1" oninput="updateSliderValues()">
+    </div>
+
+    <div class="input-group">
+        <div class="label-wrapper flex-label">
+            <label for="target">Target Point Diff</label>
+            <span id="val-target" class="val-bold">34 pts</span>
+        </div>
+        <input type="range" id="target" min="1" max="400" value="34" step="1" oninput="updateSliderValues()">
+    </div>
+
+    <!-- TIER 2 -->
+    <div class="tier-title">Tier 2: Highlighted Order Size</div>
+    <div class="tier-highlight">
+        <div class="highlight-box">
+            <span id="display-qty" class="highlight-val">0</span>
+            <span class="highlight-lbl">Total Quantity</span>
+        </div>
+        <div class="highlight-box">
+            <span id="display-lots" class="highlight-val">0</span>
+            <span class="highlight-lbl">Total Lots</span>
+        </div>
+    </div>
+
+    <!-- TIER 3 -->
+    <div class="tier-title">Tier 3: Risk, Target & Margin Deployed</div>
+    
+    <div class="output-card">
+        <span>Premium Deployed:</span>
+        <span id="out-margin" class="val-bold">₹0</span>
+    </div>
+    
+    <div class="output-card" style="border-left: 4px solid var(--danger);">
+        <span>Estimated Max Risk P&L:</span>
+        <span id="out-risk" class="val-bold text-danger">-₹0</span>
+    </div>
+    
+    <div class="output-card" style="border-left: 4px solid var(--success);">
+        <span>Target Gain P&L:</span>
+        <span id="out-gain" class="val-bold text-success">+₹0</span>
+    </div>
+</div>
+
+<script>
+    // App Configuration State
+    let currentLotSize = 65;
+
+    function setIndex(indexName, lotSize) {
+        currentLotSize = lotSize;
+        document.getElementById('btn-nifty').classList.toggle('active', indexName === 'NIFTY');
+        document.getElementById('btn-sensex').classList.toggle('active', indexName === 'SENSEX');
+        calculatePosition();
+    }
+
+    function updateSliderValues() {
+        document.getElementById('val-premium').innerText = document.getElementById('premium').value;
+        document.getElementById('val-sl').innerText = document.getElementById('sl').value + " pts";
+        document.getElementById('val-target').innerText = document.getElementById('target').value + " pts";
+        calculatePosition();
+    }
+
+    function calculatePosition() {
+        // Read Layer 1 Data Inputs
+        const totalCapital = parseFloat(document.getElementById('capital').value) || 0;
+        const premiumEntry = parseFloat(document.getElementById('premium').value) || 0;
+        const stopLossPoints = parseFloat(document.getElementById('sl').value) || 0;
+        const targetPoints = parseFloat(document.getElementById('target').value) || 0;
+
+        // Apply 30% Guardrail Limit Rule
+        const maxTradeLimit = totalCapital * 0.30;
+        document.getElementById('lbl-limit').innerText = Math.round(maxTradeLimit).toLocaleString('en-IN');
+
+        // Calculate Position Volume
+        let totalLots = 0;
+        if (premiumEntry > 0 && currentLotSize > 0) {
+            const costPerLot = premiumEntry * currentLotSize;
+            totalLots = Math.floor(maxTradeLimit / costPerLot);
+        }
+        
+        const totalQuantity = totalLots * currentLotSize;
+        const premiumDeployed = totalQuantity * premiumEntry;
+        
+        // Calculate Risk / Reward Tiers
+        const maxRiskPnL = totalQuantity * stopLossPoints;
+        const targetGainPnL = totalQuantity * targetPoints;
+
+        // Update Tier 2 DOM Elements
+        document.getElementById('display-qty').innerText = totalQuantity;
+        document.getElementById('display-lots').innerText = totalLots;
+
+        // Update Tier 3 DOM Elements
+        document.getElementById('out-margin').innerText = "₹" + Math.round(premiumDeployed).toLocaleString('en-IN');
+        document.getElementById('out-risk').innerText = "-₹" + Math.round(maxRiskPnL).toLocaleString('en-IN');
+        document.getElementById('out-gain').innerText = "+₹" + Math.round(targetGainPnL).toLocaleString('en-IN');
+    }
+
+    // Run Calculation on Layout Initial Loading Run
+    updateSliderValues();
+</script>
+
+</body>
+</html>
